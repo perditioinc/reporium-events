@@ -12,12 +12,13 @@ async def get_next_build_number(source: str, project_id: str = "perditio-platfor
 
     Collection: build_counters, document: source name.
     """
+    from google.cloud import firestore
     from google.cloud.firestore_v1 import AsyncClient
 
     db = AsyncClient(project=project_id)
     doc_ref = db.collection("build_counters").document(source)
 
-    @db.async_transactional
+    @firestore.async_transactional
     async def update_in_transaction(transaction):
         snapshot = await doc_ref.get(transaction=transaction)
         current = snapshot.get("count") if snapshot.exists else 0
