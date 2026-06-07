@@ -1,0 +1,2 @@
+# Keep LF on shell scripts so the bash shebang works on Linux/macOS runners.
+*.sh text eol=lf
