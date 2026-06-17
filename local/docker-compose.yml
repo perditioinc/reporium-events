@@ -1,0 +1,43 @@
+# Local OSS substrate for reporium-events.
+# Replaces GCP Pub/Sub + Firestore with their official, $0, locally-run emulators.
+# Additive and local-only: nothing here touches production GCP or live cloud.
+#
+# Cloud -> OSS map:
+#   GCP Pub/Sub  -> Pub/Sub emulator   (gcloud beta emulators pubsub)
+#   GCP Firestore-> Firestore emulator (gcloud beta emulators firestore)
+#
+# The google-cloud-* client libraries auto-detect these emulators via the
+# PUBSUB_EMULATOR_HOST and FIRESTORE_EMULATOR_HOST env vars, so no app code
+# changes are required: the published client points at localhost emulators.
+
+services:
+  pubsub:
+    image: gcr.io/google.com/cloudsdktool/google-cloud-cli:emulators
+    command: >
+      gcloud beta emulators pubsub start
+      --project=${PUBSUB_PROJECT_ID:-perditio-platform}
+      --host-port=0.0.0.0:8085
+    ports:
+      - "8085:8085"
+    healthcheck:
+      # The emulator answers HTTP on its host-port once ready.
+      test: ["CMD-SHELL", "curl -sf http://localhost:8085/ >/dev/null || exit 1"]
+      interval: 3s
+      timeout: 5s
+      retries: 20
+      start_period: 5s
+
+  firestore:
+    image: gcr.io/google.com/cloudsdktool/google-cloud-cli:emulators
+    command: >
+      gcloud beta emulators firestore start
+      --project=${FIRESTORE_PROJECT_ID:-perditio-platform}
+      --host-port=0.0.0.0:8086
+    ports:
+      - "8086:8086"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8086/ >/dev/null || exit 1"]
+      interval: 3s
+      timeout: 5s
+      retries: 20
+      start_period: 5s
